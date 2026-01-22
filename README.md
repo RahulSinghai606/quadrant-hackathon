@@ -35,19 +35,37 @@ A revolutionary AI-powered healthcare system combining **vector search**, **long
 
 ## 🏗️ Architecture
 
+**Two-Tier Modern Web Application**
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      MediVision AI System                        │
-├─────────────────────────────────────────────────────────────────┤
+│                     Next.js Frontend (Port 3000)                 │
+│  • TypeScript + Framer Motion                                    │
+│  • Glassmorphism UI with Tailwind CSS                            │
+│  • 5 Pages: Home, Diagnosis, Knowledge, Patients, Treatment      │
+│  • Beautiful animations and responsive design                    │
+└────────────────────────┬────────────────────────────────────────┘
+                         │ HTTP/REST API
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    FastAPI Backend (Port 8000)                   │
+│  • Python REST API exposing AI capabilities                      │
+│  • CORS enabled for frontend communication                       │
+│  • Endpoints: /diagnose, /search, /patients, /treatment          │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      MediVision AI Core                          │
 │                                                                   │
-│  ┌─────────────┐      ┌──────────────┐      ┌────────────────┐│
-│  │   Gradio    │─────▶│  RAG Engine  │─────▶│ Azure GPT-4o   ││
-│  │  Web UI     │      │              │      │  (Reasoning)   ││
-│  └─────────────┘      └──────┬───────┘      └────────────────┘│
-│                               │                                  │
-│                       ┌───────▼────────┐                        │
-│                       │  Qdrant Vector │                        │
-│                       │  Search Engine │                        │
+│  ┌──────────────┐      ┌────────────────┐                       │
+│  │  RAG Engine  │─────▶│ Azure GPT-4o   │                       │
+│  │              │      │  (Reasoning)   │                       │
+│  └──────┬───────┘      └────────────────┘                       │
+│         │                                                         │
+│  ┌──────▼────────┐                                               │
+│  │  Qdrant Vector│                                               │
+│  │  Search Engine│                                               │
 │                       └────────┬───────┘                        │
 │                               │                                  │
 │      ┌────────────────────────┼────────────────────────┐       │
@@ -97,12 +115,26 @@ A revolutionary AI-powered healthcare system combining **vector search**, **long
 - **Risk Assessment**: Highlight potential side effects and monitoring needs
 - **Alternative Options**: Provide fallback strategies if first-line fails
 
-### 5. **Professional UI** 🎨
-- **Modern Gradio Interface**: Beautiful, responsive web application
-- **Intuitive Workflows**: Streamlined for clinical use
-- **Demo Scenarios**: Pre-loaded examples for quick testing
-- **Real-time Processing**: Instant search and diagnosis results
-- **Mobile Responsive**: Accessible on tablets and smartphones
+### 5. **Production-Ready UI** 🎨
+
+**Next.js Frontend (Recommended)**:
+- ✨ **Framer Motion Animations**: Smooth, professional animations throughout
+- 🎨 **Glassmorphism Design**: Modern frosted-glass aesthetic with gradients
+- 📱 **Fully Responsive**: Optimized for desktop, tablet, and mobile
+- 🚀 **TypeScript**: Type-safe development with excellent IDE support
+- 💅 **Tailwind CSS**: Utility-first styling with custom medical theme
+- 🎯 **Five Beautiful Pages**:
+  - **Home**: Hero landing with animated stats and features
+  - **Diagnosis**: Medical diagnosis with demo scenarios and evidence display
+  - **Knowledge**: Vector search interface with relevance scoring
+  - **Patients**: Patient memory dashboard with timeline visualization
+  - **Treatment**: Treatment recommendations with warnings and alternatives
+  - **About**: System information with tech stack and collection stats
+
+**Legacy Gradio Interface** (Also Available):
+- Simple, functional interface for quick prototyping
+- Pre-loaded demo scenarios for testing
+- Real-time processing and instant results
 
 ---
 
@@ -110,11 +142,13 @@ A revolutionary AI-powered healthcare system combining **vector search**, **long
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- Qdrant Cloud account (free tier available)
-- Azure OpenAI API access (GPT-4o)
+- **Backend**: Python 3.8+
+- **Frontend**: Node.js 18+
+- **Services**: Qdrant Cloud account, Azure OpenAI API access
 
-### Installation
+### Installation (Two Options)
+
+#### Option 1: Full Stack (Next.js Frontend + FastAPI Backend) ⭐ Recommended
 
 1. **Clone the repository**
 ```bash
@@ -122,31 +156,68 @@ git clone https://github.com/RahulSinghai606/quadrant-hackathon.git
 cd quadrant-hackathon
 ```
 
-2. **Create virtual environment**
+2. **Backend Setup**
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Install Python dependencies
+pip install -r requirements.txt
+pip install -r backend-api/requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your Qdrant and Azure OpenAI credentials
 ```
 
-3. **Install dependencies**
+3. **Frontend Setup**
 ```bash
+cd frontend
+npm install
+cp .env.local.example .env.local
+# Edit .env.local (usually just API_URL=http://localhost:8000)
+```
+
+4. **Start Backend API**
+```bash
+# From project root
+cd backend-api
+python main.py
+# Backend runs on http://localhost:8000
+```
+
+5. **Start Frontend (in new terminal)**
+```bash
+# From project root
+cd frontend
+npm run dev
+# Frontend runs on http://localhost:3000
+```
+
+6. **Access the Application**
+```
+Open your browser to: http://localhost:3000
+Beautiful Next.js UI with Framer Motion animations! 🎉
+```
+
+#### Option 2: Python Only (Legacy Gradio Interface)
+
+1. **Clone and setup**
+```bash
+git clone https://github.com/RahulSinghai606/quadrant-hackathon.git
+cd quadrant-hackathon
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. **Configure environment variables**
+2. **Configure**
 ```bash
 cp .env.example .env
-# Edit .env with your API keys (see Configuration section)
+# Edit .env with your API keys
 ```
 
-5. **Run the application**
+3. **Run**
 ```bash
 python app.py
-```
-
-6. **Access the web interface**
-```
-Open your browser to: http://localhost:7860
+# Access at http://localhost:7860
 ```
 
 ---
@@ -298,6 +369,38 @@ LOG_LEVEL=INFO
 4. **Generation**: Azure GPT-4o generates response with context
 5. **Memory Storage**: Store interaction in patient memory
 6. **Output**: Structured response with source citations
+
+---
+
+## 💻 Technology Stack
+
+### Frontend (Next.js)
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript for type safety
+- **Styling**: Tailwind CSS with custom medical theme
+- **Animations**: Framer Motion for smooth, professional animations
+- **UI Design**: Glassmorphism aesthetic with gradient effects
+- **HTTP Client**: Axios for API communication
+- **Notifications**: React Hot Toast for user feedback
+- **Markdown**: React Markdown for content rendering
+
+### Backend (FastAPI)
+- **Framework**: FastAPI (Python 3.10)
+- **Server**: Uvicorn ASGI server
+- **API**: RESTful endpoints with CORS support
+- **Integration**: Direct imports from MediVision AI core modules
+
+### AI Core (Python)
+- **Vector Database**: Qdrant Cloud
+- **LLM**: Azure OpenAI GPT-4o
+- **Embeddings**: BioBERT, Sentence-BERT, ResNet-50
+- **Architecture**: RAG (Retrieval-Augmented Generation)
+
+### Development Tools
+- **Version Control**: Git + GitHub
+- **Package Management**: npm (frontend), pip (backend)
+- **Environment**: .env for configuration
+- **Documentation**: Markdown + LaTeX (Overleaf)
 
 ---
 
