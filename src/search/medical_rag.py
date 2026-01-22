@@ -6,7 +6,7 @@ from pathlib import Path
 import json
 
 from src.core import QdrantManager, MedicalLLM
-from src.embeddings import TextEmbedder, MedicalTextEmbedder, MedicalImageEmbedder
+from src.embeddings import TextEmbedder, MedicalTextEmbedder
 from src.memory import PatientMemoryManager
 from src.utils import settings, setup_logger
 
@@ -27,7 +27,6 @@ class MedicalRAGSystem:
         self.llm = MedicalLLM()
         self.text_embedder = TextEmbedder()
         self.medical_text_embedder = MedicalTextEmbedder()
-        self.image_embedder = MedicalImageEmbedder()
         self.memory_manager = PatientMemoryManager()
 
         # Collection names
@@ -41,16 +40,18 @@ class MedicalRAGSystem:
 
     def _initialize_collections(self) -> None:
         """Initialize Qdrant collections"""
-        # Medical texts collection
+        # Medical texts collection (Using 768 dim BiomedBERT)
         self.qdrant.create_collection(
             collection_name=self.texts_collection,
             vector_size=self.medical_text_embedder.dimension,
         )
 
-        # Medical images collection
+        # Medical images collection (Using 768 dim for Metadata Search)
+        # We index image descriptions/findings using the text embedder
+        # This allows searching for images using text queries
         self.qdrant.create_collection(
             collection_name=self.images_collection,
-            vector_size=self.image_embedder.dimension,
+            vector_size=self.medical_text_embedder.dimension,
         )
 
         logger.info("Qdrant collections initialized")
@@ -88,28 +89,29 @@ class MedicalRAGSystem:
 
     def index_medical_image(
         self,
-        image_path: str,
+        description: str,
         metadata: Dict[str, Any],
     ) -> str:
         """
-        Index medical image
+        Index medical image metadata for text search
 
         Args:
-            image_path: Path to medical image
+            description: Image description/findings
             metadata: Image metadata (diagnosis, modality, body_part, etc.)
 
         Returns:
             Image ID
         """
-        # Generate embedding
-        embedding = self.image_embedder.embed(image_path)[0].tolist()
+        # Generate text embedding for the image description
+        embedding = self.medical_text_embedder.embed(description)[0].tolist()
 
         # Store in Qdrant
         ids = self.qdrant.upsert_points(
             collection_name=self.images_collection,
             vectors=[embedding],
             payloads=[{
-                "image_path": str(image_path),
+                "content": description,
+                "description": description,
                 **metadata,
             }],
         )
@@ -164,25 +166,25 @@ class MedicalRAGSystem:
         logger.debug(f"Retrieved {len(retrieved)} medical texts for query: {query[:50]}...")
         return retrieved
 
-    def search_similar_images(
+    def search_medical_images(
         self,
-        image_path: str,
+        query: str,
         filters: Optional[Dict[str, Any]] = None,
         limit: int = 5,
     ) -> List[Dict[str, Any]]:
         """
-        Search for similar medical images
+        Search medical images by text query
 
         Args:
-            image_path: Path to query image
+            query: Search query
             filters: Optional metadata filters
             limit: Number of results
 
         Returns:
-            Similar images with metadata
+            Retrieved images with relevance scores
         """
         # Generate query embedding
-        query_embedding = self.image_embedder.embed(image_path)[0].tolist()
+        query_embedding = self.medical_text_embedder.embed(query)[0].tolist()
 
         # Search
         if filters:
@@ -200,16 +202,35 @@ class MedicalRAGSystem:
             )
 
         # Format results
-        similar_images = [
+        retrieved = [
             {
                 **point.payload,
-                "similarity_score": point.score,
+                "relevance_score": point.score,
             }
             for point in results
         ]
 
-        logger.debug(f"Found {len(similar_images)} similar medical images")
-        return similar_images
+        logger.debug(f"Retrieved {len(retrieved)} medical images for query: {query[:50]}...")
+        return retrieved
+
+    def search_similar_images(
+        self,
+        query: str,
+        filters: Optional[Dict[str, Any]] = None,
+        limit: int = 5,
+    ) -> List[Dict[str, Any]]:
+        """
+        Search for similar medical images (wrapper for search_medical_images)
+
+        Args:
+            query: Text description search query
+            filters: Optional metadata filters
+            limit: Number of results
+
+        Returns:
+            Similar images with metadata
+        """
+        return self.search_medical_images(query, filters, limit)
 
     def diagnose_with_context(
         self,
@@ -282,18 +303,18 @@ class MedicalRAGSystem:
 
         Args:
             patient_id: Patient identifier
-            image_path: Path to medical image
+            image_path: Path to medical image (for reference)
             image_type: Type of image (X-ray, MRI, CT, etc.)
-            description: Image description
+            description: Image description/findings
 
         Returns:
             Analysis with similar cases
         """
         logger.info(f"Analyzing medical image for patient {patient_id}")
 
-        # Find similar images
+        # Find similar images using description text search
         similar_cases = self.search_similar_images(
-            image_path=image_path,
+            query=description,
             filters={"modality": image_type},
             limit=5,
         )

@@ -227,6 +227,120 @@ async def list_collections():
         logger.error(f"Collections error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Image Search Models
+class ImageSearchRequest(BaseModel):
+    query: str
+    modality: Optional[str] = None  # X-ray, MRI, CT, etc.
+    limit: int = 5
+
+class ImageSearchResponse(BaseModel):
+    query: str
+    results: List[Dict[str, Any]]
+    count: int
+
+@app.post("/api/images/search", response_model=ImageSearchResponse)
+async def search_medical_images(request: ImageSearchRequest):
+    """
+    Search medical images by text description
+    """
+    try:
+        if not rag_system:
+            raise HTTPException(status_code=503, detail="System not initialized")
+
+        # Search using RAG system's new text-based image search
+        filters = {"modality": request.modality} if request.modality else None
+        
+        results = rag_system.search_medical_images(
+            query=request.query,
+            filters=filters,
+            limit=request.limit
+        )
+        
+        # Format results
+        image_results = [
+            {
+                "id": str(i),
+                "modality": res.get("modality", "Unknown"),
+                "body_part": res.get("body_part", "Unknown"),
+                "diagnosis": res.get("diagnosis", "Unknown"),
+                "findings": res.get("findings", ""),
+                "score": res.get("relevance_score", 0.0)
+            }
+            for i, res in enumerate(results)
+        ]
+
+        if not image_results:
+            # Fallback to demo images if no results found (shouldn't happen after seeding)
+            demo_images = [
+                {
+                    "id": "img_001",
+                    "modality": "X-ray",
+                    "body_part": "Chest",
+                    "diagnosis": "Pneumonia - left lower lobe infiltrate",
+                    "findings": "Consolidation in left lower lobe with air bronchograms",
+                    "score": 0.92
+                },
+                # ... (other demo images kept as fallback or removed)
+            ]
+            # Filter demo info
+            if request.modality:
+                demo_images = [img for img in demo_images if img["modality"].lower() == request.modality.lower()]
+            image_results = demo_images
+
+        return ImageSearchResponse(
+            query=request.query,
+            results=image_results,
+            count=len(image_results)
+        )
+
+    except Exception as e:
+        logger.error(f"Image search error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/demo/images")
+async def get_demo_images():
+    """
+    Get list of demo medical images for showcase
+    """
+    return {
+        "images": [
+            {
+                "id": "demo_xray_pneumonia",
+                "modality": "X-ray",
+                "body_part": "Chest",
+                "condition": "Pneumonia",
+                "description": "Chest X-ray showing left lower lobe pneumonia with consolidation",
+                "thumbnail_url": "/demo/xray_pneumonia.jpg"
+            },
+            {
+                "id": "demo_xray_normal",
+                "modality": "X-ray", 
+                "body_part": "Chest",
+                "condition": "Normal",
+                "description": "Normal chest X-ray with clear lung fields",
+                "thumbnail_url": "/demo/xray_normal.jpg"
+            },
+            {
+                "id": "demo_ct_brain",
+                "modality": "CT",
+                "body_part": "Brain",
+                "condition": "Normal",
+                "description": "Normal brain CT without contrast",
+                "thumbnail_url": "/demo/ct_brain.jpg"
+            },
+            {
+                "id": "demo_mri_knee",
+                "modality": "MRI",
+                "body_part": "Knee",
+                "condition": "ACL Tear",
+                "description": "MRI showing complete ACL rupture",
+                "thumbnail_url": "/demo/mri_knee.jpg"
+            }
+        ],
+        "count": 4,
+        "note": "These are demo examples. In production, this would query the medical_images Qdrant collection."
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

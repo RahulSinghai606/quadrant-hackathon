@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "MediVision AI - Healthcare Intelligence",
@@ -19,30 +16,31 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className="dark">
+      <body className="font-body">
         {children}
         <Toaster
           position="top-right"
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#fff',
-              color: '#363636',
+              background: '#1a2234',
+              color: '#f3f4f6',
               padding: '16px',
               borderRadius: '12px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              border: '1px solid #374151',
+              boxShadow: '0 8px 40px rgba(0, 0, 0, 0.5)',
             },
             success: {
               iconTheme: {
-                primary: '#43e97b',
-                secondary: '#fff',
+                primary: '#34d399',
+                secondary: '#1a2234',
               },
             },
             error: {
               iconTheme: {
-                primary: '#f5576c',
-                secondary: '#fff',
+                primary: '#fb7185',
+                secondary: '#1a2234',
               },
             },
           }}

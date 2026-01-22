@@ -12,6 +12,7 @@ from qdrant_client.models import (
     MatchValue,
     SearchRequest,
     ScoredPoint,
+    PayloadSchemaType,
 )
 from uuid import uuid4
 
@@ -26,10 +27,13 @@ class QdrantManager:
     def __init__(self):
         """Initialize Qdrant client"""
         logger.info(f"Connecting to Qdrant at {settings.qdrant_url}")
-        self.client = QdrantClientBase(
-            url=settings.qdrant_url,
-            api_key=settings.qdrant_api_key,
-        )
+        if settings.qdrant_url == ":memory:":
+            self.client = QdrantClientBase(location=":memory:")
+        else:
+            self.client = QdrantClientBase(
+                url=settings.qdrant_url,
+                api_key=settings.qdrant_api_key,
+            )
         logger.info("Qdrant client initialized successfully")
 
     def create_collection(
@@ -53,6 +57,8 @@ class QdrantManager:
 
             if collection_name in collection_names:
                 logger.info(f"Collection '{collection_name}' already exists")
+                # Ensure indexes exist even for existing collections
+                self._ensure_payload_indexes(collection_name)
                 return
 
             # Create collection
@@ -65,9 +71,34 @@ class QdrantManager:
             )
             logger.info(f"Created collection '{collection_name}' with dimension {vector_size}")
 
+            # Create payload indexes for filtering
+            self._ensure_payload_indexes(collection_name)
+
         except Exception as e:
             logger.error(f"Failed to create collection '{collection_name}': {e}")
             raise
+
+    def _ensure_payload_indexes(self, collection_name: str) -> None:
+        """
+        Create payload indexes for common filter fields
+        
+        Args:
+            collection_name: Name of the collection
+        """
+        index_fields = ["patient_id", "type", "specialty"]
+        
+        for field in index_fields:
+            try:
+                self.client.create_payload_index(
+                    collection_name=collection_name,
+                    field_name=field,
+                    field_schema=PayloadSchemaType.KEYWORD,
+                )
+                logger.debug(f"Created payload index for '{field}' in collection '{collection_name}'")
+            except Exception as e:
+                # Index might already exist, which is fine
+                if "already exists" not in str(e).lower():
+                    logger.debug(f"Could not create index for '{field}': {e}")
 
     def upsert_points(
         self,

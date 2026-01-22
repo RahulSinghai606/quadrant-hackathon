@@ -1,16 +1,16 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
 
 interface AnimatedButtonProps {
   children: ReactNode;
   onClick?: () => void;
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   disabled?: boolean;
   loading?: boolean;
   className?: string;
   icon?: ReactNode;
+  type?: 'button' | 'submit' | 'reset';
 }
 
 export default function AnimatedButton({
@@ -20,38 +20,37 @@ export default function AnimatedButton({
   disabled = false,
   loading = false,
   className = '',
-  icon
+  icon,
+  type = 'button'
 }: AnimatedButtonProps) {
-  const baseClasses = 'px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center gap-2 justify-center';
+  const baseClasses = 'px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center gap-2 justify-center';
 
   const variantClasses = {
-    primary: 'bg-medical-gradient text-white shadow-lg hover:shadow-2xl',
-    secondary: 'bg-medical-gradient-2 text-white shadow-lg hover:shadow-2xl',
-    outline: 'border-2 border-medical-blue text-medical-blue hover:bg-medical-blue hover:text-white'
+    primary: 'bg-clinical-accent text-clinical-bg hover:bg-cyan-400 active:bg-cyan-500 shadow-accent-glow hover:shadow-accent-glow-lg',
+    secondary: 'bg-clinical-elevated text-clinical-text border border-clinical-border hover:border-clinical-accent hover:text-clinical-accent',
+    outline: 'border-2 border-clinical-accent text-clinical-accent hover:bg-clinical-accent hover:text-clinical-bg',
+    ghost: 'text-clinical-muted hover:text-clinical-text hover:bg-clinical-elevated',
   };
 
+  const disabledClasses = disabled || loading
+    ? 'opacity-50 cursor-not-allowed'
+    : 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]';
+
   return (
-    <motion.button
-      whileHover={{ scale: disabled || loading ? 1 : 1.05 }}
-      whileTap={{ scale: disabled || loading ? 1 : 0.95 }}
-      className={`${baseClasses} ${variantClasses[variant]} ${
-        disabled || loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-      } ${className}`}
+    <button
+      type={type}
+      className={`${baseClasses} ${variantClasses[variant]} ${disabledClasses} ${className}`}
       onClick={onClick}
       disabled={disabled || loading}
     >
       {loading ? (
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-        />
+        <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
       ) : (
         <>
-          {icon && <span>{icon}</span>}
+          {icon && <span className="text-base">{icon}</span>}
           {children}
         </>
       )}
-    </motion.button>
+    </button>
   );
 }

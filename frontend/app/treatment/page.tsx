@@ -1,25 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Pill, AlertTriangle, CheckCircle, Info, Sparkles, FileText } from 'lucide-react';
+import { Pill, CheckCircle, Sparkles, FileText } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import GlassCard from '@/components/GlassCard';
+import Navbar from '@/components/Navbar';
+import ClinicalCard from '@/components/ClinicalCard';
 import AnimatedButton from '@/components/AnimatedButton';
 import ReactMarkdown from 'react-markdown';
 
 interface Evidence {
   content: string;
-  score: number;
-  source: string;
+  score?: number;
+  source?: string;
+  [key: string]: any;
 }
 
 interface TreatmentResponse {
+  patient_id: string;
   recommendations: string;
   evidence: Evidence[];
-  warnings: string[];
-  alternatives: string[];
 }
 
 export default function TreatmentPage() {
@@ -66,15 +66,19 @@ export default function TreatmentPage() {
       const response = await axios.post<TreatmentResponse>(
         `${process.env.NEXT_PUBLIC_API_URL}/api/treatment`,
         {
-          diagnosis,
-          patient_context: patientContext,
+          patient_id: 'DEMO_P001',
+          diagnosis: `${diagnosis}${patientContext ? `. Patient context: ${patientContext}` : ''}`,
+          contraindications: [],
         }
       );
       setTreatment(response.data);
       toast.success('Treatment recommendations generated');
     } catch (error: any) {
       console.error('Treatment error:', error);
-      toast.error(error.response?.data?.detail || 'Failed to generate recommendations');
+      const errorMsg = typeof error.response?.data?.detail === 'string'
+        ? error.response.data.detail
+        : 'Failed to generate recommendations';
+      toast.error(errorMsg);
       setTreatment(null);
     } finally {
       setLoading(false);
@@ -82,74 +86,65 @@ export default function TreatmentPage() {
   };
 
   return (
-    <div className="min-h-screen py-20 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen">
+      <Navbar />
+
+      <div className="container-wide section">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
+        <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <motion.div
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <Pill className="w-12 h-12 text-medical-pink" />
-            </motion.div>
-            <h1 className="text-5xl font-bold gradient-text">Treatment Recommendations</h1>
+            <Pill className="w-10 h-10 text-clinical-coral" />
+            <h1 className="text-4xl md:text-5xl font-display font-bold gradient-text">Treatment Recommendations</h1>
           </div>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-clinical-muted max-w-2xl mx-auto">
             Evidence-based treatment plans with safety warnings and alternatives
           </p>
-        </motion.div>
+        </div>
 
         {/* Input Section */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           {/* Diagnosis Input */}
-          <GlassCard delay={0.1}>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Diagnosis <span className="text-red-500">*</span>
+          <ClinicalCard>
+            <label className="block text-sm font-semibold text-clinical-text mb-3">
+              Diagnosis <span className="text-clinical-coral">*</span>
             </label>
             <textarea
               value={diagnosis}
               onChange={(e) => setDiagnosis(e.target.value)}
               placeholder="Enter primary diagnosis..."
-              className="w-full px-4 py-3 bg-white/50 border border-white/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-medical-pink/50 text-gray-800 placeholder-gray-500 resize-none"
+              className="clinical-input resize-none"
               rows={4}
             />
-          </GlassCard>
+          </ClinicalCard>
 
           {/* Patient Context */}
-          <GlassCard delay={0.2}>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
+          <ClinicalCard>
+            <label className="block text-sm font-semibold text-clinical-text mb-3">
               Patient Context (Optional)
             </label>
             <textarea
               value={patientContext}
               onChange={(e) => setPatientContext(e.target.value)}
               placeholder="Age, comorbidities, medications, allergies..."
-              className="w-full px-4 py-3 bg-white/50 border border-white/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-medical-pink/50 text-gray-800 placeholder-gray-500 resize-none"
+              className="clinical-input resize-none"
               rows={4}
             />
-          </GlassCard>
+          </ClinicalCard>
         </div>
 
         {/* Actions */}
-        <GlassCard delay={0.3} className="mb-8">
+        <ClinicalCard className="mb-8">
           <div className="flex flex-wrap gap-4 items-center justify-between">
-            <div className="flex gap-2">
-              <span className="text-sm text-gray-600">Quick scenarios:</span>
+            <div className="flex gap-2 items-center flex-wrap">
+              <span className="text-sm text-clinical-muted">Quick scenarios:</span>
               {demoScenarios.map((scenario) => (
-                <motion.button
+                <button
                   key={scenario.id}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
                   onClick={() => loadDemo(scenario)}
-                  className="px-3 py-1 bg-medical-pink/10 hover:bg-medical-pink/20 rounded-full text-sm text-medical-pink transition-colors"
+                  className="px-3 py-1 bg-clinical-coral/10 hover:bg-clinical-coral/20 border border-clinical-coral/30 hover:border-clinical-coral rounded-full text-sm text-clinical-coral transition-all duration-200"
                 >
                   {scenario.name}
-                </motion.button>
+                </button>
               ))}
             </div>
             <AnimatedButton
@@ -157,211 +152,104 @@ export default function TreatmentPage() {
               loading={loading}
               variant="primary"
               className="px-8"
+              icon={<Sparkles className="w-4 h-4" />}
             >
-              <Sparkles className="w-5 h-5 mr-2" />
               Generate Recommendations
             </AnimatedButton>
           </div>
-        </GlassCard>
+        </ClinicalCard>
 
         {/* Results */}
-        <AnimatePresence mode="wait">
-          {loading ? (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center py-20"
-            >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="inline-block"
-              >
-                <Sparkles className="w-12 h-12 text-medical-pink" />
-              </motion.div>
-              <p className="mt-4 text-gray-600">Analyzing treatment options...</p>
-            </motion.div>
-          ) : treatment ? (
-            <motion.div
-              key="results"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-6"
-            >
-              {/* Warnings */}
-              {treatment.warnings && treatment.warnings.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <GlassCard className="border-2 border-red-200">
-                    <div className="flex items-start gap-4">
-                      <motion.div
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 1, repeat: Infinity }}
-                      >
-                        <AlertTriangle className="w-8 h-8 text-red-500 flex-shrink-0" />
-                      </motion.div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-red-700 mb-3">
-                          Important Warnings
-                        </h3>
-                        <ul className="space-y-2">
-                          {treatment.warnings.map((warning, index) => (
-                            <motion.li
-                              key={index}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: 0.1 + index * 0.1 }}
-                              className="flex items-start gap-2 text-red-700"
-                            >
-                              <span className="text-red-500 mt-1">•</span>
-                              <span>{warning}</span>
-                            </motion.li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </GlassCard>
-                </motion.div>
-              )}
-
-              {/* Main Recommendations */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <GlassCard>
-                  <div className="flex items-center gap-3 mb-6">
-                    <CheckCircle className="w-8 h-8 text-green-500" />
-                    <h2 className="text-2xl font-bold text-gray-800">
-                      Treatment Recommendations
-                    </h2>
-                  </div>
-                  <div className="prose prose-lg max-w-none text-gray-700">
-                    <ReactMarkdown>{treatment.recommendations}</ReactMarkdown>
-                  </div>
-                </GlassCard>
-              </motion.div>
-
-              {/* Alternatives */}
-              {treatment.alternatives && treatment.alternatives.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <GlassCard>
-                    <div className="flex items-center gap-3 mb-6">
-                      <Info className="w-8 h-8 text-blue-500" />
-                      <h3 className="text-2xl font-bold text-gray-800">
-                        Alternative Options
-                      </h3>
-                    </div>
-                    <div className="space-y-3">
-                      {treatment.alternatives.map((alt, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.3 + index * 0.1 }}
-                          className="p-4 bg-blue-50 rounded-xl text-gray-700"
-                        >
-                          {alt}
-                        </motion.div>
-                      ))}
-                    </div>
-                  </GlassCard>
-                </motion.div>
-              )}
-
-              {/* Evidence */}
-              {treatment.evidence && treatment.evidence.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <GlassCard>
-                    <div className="flex items-center gap-3 mb-6">
-                      <FileText className="w-8 h-8 text-medical-purple" />
-                      <h3 className="text-2xl font-bold text-gray-800">
-                        Supporting Evidence
-                      </h3>
-                    </div>
-                    <div className="space-y-4">
-                      {treatment.evidence.map((item, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.4 + index * 0.1 }}
-                          className="p-4 bg-purple-50 rounded-xl"
-                        >
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="flex items-center gap-2">
-                              <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${item.score * 100}%` }}
-                                  transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
-                                  className="h-full bg-gradient-to-r from-medical-purple to-medical-pink"
-                                />
-                              </div>
-                              <span className="text-xs font-mono text-gray-600">
-                                {(item.score * 100).toFixed(0)}%
-                              </span>
-                            </div>
-                            <span className="text-xs text-gray-500">{item.source}</span>
-                          </div>
-                          <p className="text-gray-700">{item.content}</p>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </GlassCard>
-                </motion.div>
-              )}
-            </motion.div>
-          ) : (
-            <motion.div
-              key="empty"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center py-20"
-            >
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                <Pill className="w-20 h-20 text-medical-pink/30 mx-auto mb-6" />
-              </motion.div>
-              <h3 className="text-2xl font-bold text-gray-700 mb-2">
-                Get Treatment Recommendations
-              </h3>
-              <p className="text-gray-600 max-w-md mx-auto mb-6">
-                Enter a diagnosis and patient context to receive evidence-based treatment
-                recommendations with safety warnings
-              </p>
-              <div className="flex gap-3 justify-center">
-                {demoScenarios.map((scenario) => (
-                  <AnimatedButton
-                    key={scenario.id}
-                    onClick={() => loadDemo(scenario)}
-                    variant="secondary"
-                  >
-                    {scenario.name}
-                  </AnimatedButton>
-                ))}
+        {loading ? (
+          <div className="text-center py-20">
+            <div className="w-12 h-12 border-2 border-clinical-accent border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="mt-4 text-clinical-muted">Analyzing treatment options...</p>
+          </div>
+        ) : treatment ? (
+          <div className="space-y-6">
+            {/* Main Recommendations */}
+            <ClinicalCard variant="accent">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-full bg-emerald-400/10 border border-emerald-400/30 flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-emerald-400" />
+                </div>
+                <h2 className="text-xl font-display font-bold text-clinical-text">
+                  Treatment Recommendations
+                </h2>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <div className="prose prose-sm max-w-none">
+                <ReactMarkdown>{treatment.recommendations}</ReactMarkdown>
+              </div>
+            </ClinicalCard>
+
+            {/* Evidence */}
+            {treatment.evidence && treatment.evidence.length > 0 && (
+              <ClinicalCard>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-full bg-purple-400/10 border border-purple-400/30 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <h3 className="text-xl font-display font-bold text-clinical-text">
+                    Supporting Evidence
+                  </h3>
+                </div>
+                <div className="space-y-4">
+                  {treatment.evidence.map((item, index) => {
+                    const score = item.score ?? 0.8;
+                    return (
+                      <div
+                        key={index}
+                        className="p-4 bg-purple-400/10 border border-purple-400/20 rounded-xl"
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-24 h-2 bg-clinical-elevated rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-purple-400 transition-all duration-500"
+                                style={{ width: `${score * 100}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-mono text-clinical-muted">
+                              {(score * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                          {item.source && (
+                            <span className="text-xs text-clinical-muted">{item.source}</span>
+                          )}
+                        </div>
+                        <p className="text-clinical-muted">{item.content}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ClinicalCard>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-20">
+            <div className="w-20 h-20 rounded-full bg-clinical-elevated border border-clinical-border flex items-center justify-center mx-auto mb-6">
+              <Pill className="w-10 h-10 text-clinical-muted" />
+            </div>
+            <h3 className="text-2xl font-display font-bold text-clinical-text mb-2">
+              Get Treatment Recommendations
+            </h3>
+            <p className="text-clinical-muted max-w-md mx-auto mb-6">
+              Enter a diagnosis and patient context to receive evidence-based treatment
+              recommendations with safety warnings
+            </p>
+            <div className="flex gap-3 justify-center flex-wrap">
+              {demoScenarios.map((scenario) => (
+                <AnimatedButton
+                  key={scenario.id}
+                  onClick={() => loadDemo(scenario)}
+                  variant="secondary"
+                >
+                  {scenario.name}
+                </AnimatedButton>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

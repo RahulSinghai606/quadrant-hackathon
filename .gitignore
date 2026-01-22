@@ -84,3 +84,5 @@ frontend/*.tsbuildinfo
 # Backend API
 backend-api/__pycache__/
 backend-api/*.pyc
+.claude/
+demo-video/

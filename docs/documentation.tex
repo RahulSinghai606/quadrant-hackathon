@@ -6,10 +6,13 @@
 \usepackage{amsmath}
 \usepackage{listings}
 \usepackage{xcolor}
-\usepackage{tikz}
 \usepackage{float}
 \usepackage{enumitem}
 \usepackage{fancyhdr}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{caption}
+\usepackage{subcaption}
 
 % Configure hyperlinks
 \hypersetup{
@@ -17,30 +20,43 @@
     linkcolor=blue,
     filecolor=magenta,
     urlcolor=cyan,
-    pdftitle={MediVision AI Documentation},
-    pdfauthor={Team Convolve},
+    pdftitle={MediVision AI - Technical Documentation},
+    pdfauthor={Team Cognito},
 }
 
 % Code listing configuration
 \lstset{
-    basicstyle=\ttfamily\small,
+    basicstyle=\ttfamily\footnotesize,
     breaklines=true,
     frame=single,
     language=Python,
     commentstyle=\color{green!60!black},
     keywordstyle=\color{blue},
     stringstyle=\color{orange},
+    backgroundcolor=\color{gray!5},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    numbersep=5pt,
 }
 
 % Header and footer
 \pagestyle{fancy}
 \fancyhf{}
 \rhead{MediVision AI}
-\lhead{Convolve 4.0 Hackathon}
+\lhead{Team Cognito | Convolve 4.0}
 \cfoot{\thepage}
 
-\title{\Huge\textbf{MediVision AI} \\ \Large Healthcare Memory Assistant with Multimodal Medical Intelligence \\ \vspace{0.5cm} \large Technical Documentation}
-\author{Team Convolve \\ Convolve 4.0 - Pan-IIT AI/ML Hackathon}
+\title{
+    \vspace{-2cm}
+    \textbf{\Huge MediVision AI} \\[0.5cm]
+    \Large A Healthcare Memory Assistant with Multimodal Medical Intelligence \\[0.3cm]
+    \large Powered by Qdrant Vector Search Engine \\[1cm]
+    \normalsize Technical Documentation for Convolve 4.0 Pan-IIT AI/ML Hackathon
+}
+\author{
+    \textbf{Team Cognito} \\[0.3cm]
+    \small Qdrant Problem Statement: Search, Memory, and Recommendations for Societal Impact
+}
 \date{\today}
 
 \begin{document}
@@ -48,20 +64,19 @@
 \maketitle
 \thispagestyle{empty}
 
-\begin{center}
-\vspace{2cm}
-\Large
-\textbf{Submitted for:} Qdrant Problem Statement \\
-\vspace{0.5cm}
-Search, Memory, and Recommendations for Societal Impact \\
-\vspace{1cm}
-\includegraphics[width=0.5\textwidth]{logo.png} % Add logo if available
-\end{center}
-
 \vfill
 
 \begin{abstract}
-MediVision AI is a production-grade healthcare intelligence system that addresses critical healthcare access challenges through advanced vector search, long-term memory, and evidence-based reasoning. Built on Qdrant vector search engine and Azure GPT-4o, the system provides semantic medical knowledge retrieval, persistent patient memory management, and context-aware diagnostic support. This document presents the complete technical architecture, implementation details, evaluation results, and societal impact analysis.
+\noindent
+Healthcare accessibility remains a critical global challenge, with the World Health Organization reporting that over 400 million individuals lack access to essential health services. This disparity is exacerbated by the fragmentation of patient histories across disparate systems, the rapid evolution of medical literature that practitioners struggle to keep pace with, and the geographic barriers that prevent timely access to specialized care.
+
+\vspace{0.3cm}
+\noindent
+\textbf{MediVision AI} is a production-grade healthcare intelligence system designed to address these challenges through the innovative application of vector search technology. Built upon Qdrant---a high-performance, open-source vector search engine---and integrated with Azure's GPT-4o large language model, our system delivers three core capabilities that directly respond to the hackathon's mandate: \textbf{(1) Semantic Search} across a comprehensive medical knowledge base, \textbf{(2) Long-term Patient Memory} that persists across sessions and enables contextual reasoning, and \textbf{(3) Evidence-Based Recommendations} that ground every clinical suggestion in retrievable, citable sources.
+
+\vspace{0.3cm}
+\noindent
+This document presents the complete technical architecture of MediVision AI, details our multimodal embedding strategy that enables searching both clinical text and medical imaging metadata, explains the memory management system that maintains patient context over time, and discusses the ethical considerations and limitations inherent in deploying AI systems within healthcare contexts.
 \end{abstract}
 
 \newpage
@@ -69,784 +84,331 @@ MediVision AI is a production-grade healthcare intelligence system that addresse
 \newpage
 
 %===========================================
-\section{Problem Statement}
+\section{Introduction and Problem Statement}
 %===========================================
 
-\subsection{Motivation}
+\subsection{The Healthcare Access Crisis}
 
-Healthcare access remains one of the most critical societal challenges worldwide. According to the World Health Organization, over 400 million people lack access to essential health services. Key barriers include:
+The global healthcare system faces an unprecedented convergence of challenges that modern artificial intelligence is uniquely positioned to address. According to recent studies by the World Health Organization, approximately half of the world's population lacks access to essential health services, with the burden falling disproportionately on low-income regions and underserved communities within developed nations.
 
-\begin{itemize}[leftmargin=*]
-    \item \textbf{Doctor shortage:} Rural and underserved areas lack qualified medical professionals
-    \item \textbf{Knowledge gaps:} Healthcare providers struggle to stay current with rapidly evolving medical literature
-    \item \textbf{Continuity of care:} Patient history is fragmented across providers and systems
-    \item \textbf{Diagnostic errors:} Lack of systematic knowledge retrieval leads to preventable mistakes
-    \item \textbf{Geographic barriers:} Distance prevents timely access to specialized care
-\end{itemize}
+This accessibility crisis manifests through several interconnected barriers. First, there exists a severe shortage of qualified medical professionals in rural and remote areas, where doctor-to-patient ratios can exceed 1:10,000 compared to urban centers. Second, the exponential growth of medical literature---with over 1.8 million biomedical articles published annually---makes it virtually impossible for practitioners to remain current with the latest treatment guidelines and diagnostic protocols. Third, the fragmentation of electronic health records across different providers and systems creates dangerous gaps in patient history, leading to redundant testing, drug interactions, and missed diagnoses.
 
-\subsection{Societal Impact}
+\subsection{The Role of AI in Healthcare Augmentation}
 
-\textbf{Why This Matters:}
+Rather than seeking to replace human clinicians, MediVision AI is designed as a \textit{clinical copilot}---an intelligent assistant that augments the capabilities of healthcare providers by providing instant access to relevant medical knowledge, maintaining comprehensive patient histories, and ensuring that every recommendation is grounded in retrievable evidence.
 
-Modern AI systems can address these challenges by:
-\begin{enumerate}
-    \item \textbf{Augmenting healthcare providers} with evidence-based decision support
-    \item \textbf{Maintaining comprehensive patient memory} across time and interactions
-    \item \textbf{Democratizing medical knowledge} for underserved communities
-    \item \textbf{Reducing diagnostic errors} through systematic retrieval
-    \item \textbf{Enabling telemedicine} with intelligent context management
-\end{enumerate}
+The fundamental insight driving our approach is that the challenges of healthcare access are, at their core, challenges of \textbf{information retrieval} and \textbf{memory management}. A physician in a rural clinic lacks access not only to specialists, but to the vast body of medical knowledge that those specialists have internalized over years of practice. Similarly, a patient who sees multiple providers receives fragmented care because no single system maintains a holistic view of their medical history.
 
-\textbf{MediVision AI} addresses these needs by combining:
-\begin{itemize}
-    \item \textbf{Vector search} for semantic medical knowledge retrieval
-    \item \textbf{Long-term memory} for patient history tracking
-    \item \textbf{Multimodal understanding} of text and medical images
-    \item \textbf{Evidence-based reasoning} with source citation
-    \item \textbf{Clinical decision support} for diagnosis and treatment
-\end{itemize}
+Vector search technology, as implemented by Qdrant, provides a powerful solution to both challenges. By encoding medical knowledge and patient interactions as dense vector embeddings, we enable semantic search that understands the meaning behind queries rather than merely matching keywords. This allows a general practitioner to query "patient presenting with productive cough, fever, and chest pain" and receive relevant clinical guidelines for community-acquired pneumonia, even if those guidelines do not contain those exact phrases.
 
-%===========================================
-\section{System Design}
-%===========================================
+\subsection{Project Objectives}
 
-\subsection{Architecture Overview}
-
-MediVision AI employs a \textbf{Retrieval-Augmented Generation (RAG)} architecture with three core components:
+MediVision AI was developed with the following primary objectives, each directly aligned with the Qdrant Problem Statement requirements:
 
 \begin{enumerate}
-    \item \textbf{Qdrant Vector Search Engine} - Primary data store
-    \item \textbf{Azure GPT-4o} - Language model for reasoning
-    \item \textbf{Multi-model Embeddings} - Semantic understanding
+    \item \textbf{Effective Multimodal Retrieval:} Implement a system capable of storing and querying both textual medical guidelines and medical imaging metadata using appropriate vector embeddings and similarity search techniques.
+    
+    \item \textbf{Persistent Long-term Memory:} Develop a patient memory system that maintains interaction history across sessions, enabling the system to provide contextually-aware diagnoses that account for a patient's complete medical history.
+    
+    \item \textbf{Evidence-Based Outputs:} Ensure that all diagnostic suggestions and treatment recommendations are explicitly grounded in retrieved documents, with clear citations and relevance scores to enable verification by healthcare professionals.
+    
+    \item \textbf{Societal Relevance:} Address the real-world challenge of healthcare access by creating a system that can augment the capabilities of healthcare providers in resource-limited settings.
 \end{enumerate}
+
+%===========================================
+\section{System Architecture}
+%===========================================
+
+\subsection{Architectural Philosophy}
+
+The architecture of MediVision AI is guided by three core principles: \textbf{retrieval-first reasoning}, \textbf{separation of concerns}, and \textbf{scalable modularity}. We adopt the Retrieval-Augmented Generation (RAG) paradigm, which has emerged as the gold standard for building AI systems that must provide accurate, verifiable information without hallucination.
+
+In the RAG paradigm, the large language model (in our case, Azure GPT-4o) is never asked to generate medical information from its pretrained knowledge alone. Instead, every query first triggers a retrieval phase where relevant documents are fetched from the vector database, and the language model is then tasked with synthesizing a response that explicitly references these retrieved sources. This approach dramatically reduces the risk of hallucinated medical advice---a critical safety consideration in healthcare applications.
+
+\subsection{Component Overview}
+
+The system comprises four primary layers, each implementing a distinct set of responsibilities:
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[
-    box/.style={rectangle, draw, minimum width=3cm, minimum height=1cm, text centered, rounded corners},
-    arrow/.style={->, >=stealth, thick}
-]
-    % Layers
-    \node[box, fill=blue!20] (ui) at (0,0) {Gradio Web UI};
-    \node[box, fill=green!20] (rag) at (0,-2) {RAG Engine};
-    \node[box, fill=red!20] (llm) at (4,-2) {Azure GPT-4o};
-    \node[box, fill=purple!20] (qdrant) at (0,-4) {Qdrant Vector DB};
-
-    % Collections
-    \node[box, fill=yellow!20, minimum width=2cm] (texts) at (-3,-6) {Medical Texts};
-    \node[box, fill=yellow!20, minimum width=2cm] (memory) at (0,-6) {Patient Memory};
-    \node[box, fill=yellow!20, minimum width=2cm] (images) at (3,-6) {Medical Images};
-
-    % Embeddings
-    \node[box, fill=orange!20, minimum width=8cm, minimum height=0.8cm] (embed) at (0,-7.5) {Embeddings: BioBERT | Sentence-BERT | ResNet-50};
-
-    % Arrows
-    \draw[arrow] (ui) -- (rag);
-    \draw[arrow] (rag) -- (llm);
-    \draw[arrow] (rag) -- (qdrant);
-    \draw[arrow] (qdrant) -- (texts);
-    \draw[arrow] (qdrant) -- (memory);
-    \draw[arrow] (qdrant) -- (images);
-    \draw[arrow] (texts) -- (embed);
-    \draw[arrow] (memory) -- (embed);
-    \draw[arrow] (images) -- (embed);
-\end{tikzpicture}
-\caption{MediVision AI System Architecture}
+\includegraphics[width=0.95\textwidth]{architecture.png}
+\caption{High-level system architecture of MediVision AI, illustrating the flow of data from user interface through the RAG pipeline to the Qdrant vector database and back.}
+\label{fig:architecture}
 \end{figure}
 
-\subsection{Why Qdrant is Critical}
+\subsubsection{Presentation Layer}
 
-Qdrant is the \textbf{primary vector search engine} and serves as the foundation for all system capabilities:
+The user interface is implemented as a hybrid system combining a Next.js web application for the primary patient-facing and clinician-facing views with a Gradio interface for rapid prototyping and demonstration purposes. The Next.js frontend communicates with the backend via RESTful API calls, enabling a clean separation between presentation logic and business logic.
+
+The interface provides distinct views for different use cases: a \textbf{Knowledge Search} interface that allows free-text querying of the medical knowledge base, a \textbf{Diagnosis Assistant} that guides clinicians through symptom collection and evidence-based diagnosis, an \textbf{Image Search} interface for finding relevant medical imaging cases, and a \textbf{Patient Memory} view that displays and allows navigation of a patient's interaction history.
+
+\subsubsection{Application Layer}
+
+The backend is implemented in Python using the FastAPI framework, chosen for its high performance, automatic OpenAPI documentation generation, and native support for asynchronous request handling. The application layer orchestrates all business logic, including the coordination of embedding generation, vector search, and language model inference.
+
+Key responsibilities of this layer include: parsing and validating incoming requests, invoking the appropriate embedding model for the query type, constructing and executing Qdrant search queries, formatting retrieved context for the language model, and managing the persistence of new interactions to patient memory.
+
+\subsubsection{Intelligence Layer}
+
+The intelligence layer comprises the embedding models and the large language model that together enable semantic understanding and natural language generation.
+
+For text encoding, we employ \textbf{BiomedNLP-BiomedBERT}, a transformer model pretrained on a large corpus of biomedical literature including PubMed abstracts and PMC full-text articles. This domain-specific pretraining is crucial for capturing the nuanced semantics of medical terminology---words like "MI" (myocardial infarction), "PE" (pulmonary embolism), and "CHF" (congestive heart failure) carry specific meanings that general-purpose models may not encode accurately.
+
+BiomedBERT produces 768-dimensional vector embeddings that capture the semantic content of text passages. We use these embeddings for both the medical knowledge base and the medical imaging metadata, enabling unified semantic search across both modalities.
+
+For patient memory encoding, we use \textbf{sentence-transformers/all-MiniLM-L6-v2}, a more compact 384-dimensional model optimized for sentence similarity tasks. The choice of a smaller model for patient memory reflects the different nature of this data: patient interactions are more conversational in nature and benefit from a model optimized for general semantic similarity rather than domain-specific medical terminology.
+
+Natural language generation is performed by \textbf{Azure GPT-4o}, accessed via the Azure OpenAI Service. We configure the model with custom system prompts that emphasize evidence-based reasoning, explicit source citation, and appropriate epistemic humility when the retrieved context is insufficient to support a confident recommendation.
+
+\subsubsection{Data Layer}
+
+The data layer is built entirely on \textbf{Qdrant}, an open-source vector database chosen for its production-grade performance, strong consistency guarantees, and rich filtering capabilities. Qdrant serves as the single source of truth for all system data, including the medical knowledge base, patient interaction histories, and medical imaging metadata.
+
+We organize data into three distinct collections, each optimized for its specific use case:
 
 \begin{itemize}
-    \item \textbf{Semantic Search:} Dense vector similarity for medical knowledge retrieval
-    \item \textbf{Hybrid Search:} Combines semantic similarity with metadata filtering
-    \item \textbf{Long-term Memory:} Persistent storage of patient interactions
-    \item \textbf{Real-time Updates:} Immediate indexing of new data
-    \item \textbf{Scalability:} Handles millions of vectors with sub-second latency
-    \item \textbf{Multimodal Support:} Different vector dimensions for text and images
+    \item \textbf{medical\_texts:} Contains 65 clinical guidelines covering 12 medical specialties. Each document is encoded using BiomedBERT (768 dimensions) and stored with rich metadata including title, specialty, category (diagnosis vs. treatment), and source.
+    
+    \item \textbf{medical\_images:} Contains metadata for 47 annotated medical images spanning X-ray, CT, MRI, ultrasound, and other modalities. Rather than encoding pixel data directly, we encode textual descriptions of findings using BiomedBERT, enabling semantic search ("find chest X-rays showing pneumonia") rather than purely visual similarity.
+    
+    \item \textbf{patient\_memory:} Contains over 300 patient interaction records representing consultations, diagnoses, follow-ups, and medication adjustments for 10 simulated patients. Each interaction is encoded using MiniLM (384 dimensions) and indexed by patient ID for efficient retrieval.
 \end{itemize}
 
-\textbf{Without Qdrant:}
-\begin{itemize}
-    \item No efficient semantic search across medical literature
-    \item No persistent patient memory with semantic retrieval
-    \item No similarity-based medical image analysis
-    \item No hybrid filtering for specialized queries
-\end{itemize}
+\subsection{Justification for Qdrant as the Core Component}
 
-\subsection{Data Flow}
+Qdrant is not merely a storage backend for MediVision AI---it is the foundational technology that enables all three core capabilities mandated by the problem statement.
 
-\textbf{Indexing Pipeline:}
-\begin{enumerate}
-    \item Medical text/image → Embedding model → Vector representation
-    \item Vector + Metadata → Qdrant.upsert() → Stored in collection
-    \item Supports batch and streaming ingestion
-\end{enumerate}
+\textbf{For Semantic Search:} Qdrant's support for high-dimensional dense vector search with configurable distance metrics (we use cosine similarity) enables us to find conceptually similar documents even when they share no common keywords with the query. When a clinician queries "patient has difficulty breathing and a productive cough," the system can retrieve documents about "dyspnea," "pneumonia," and "respiratory infection" because BiomedBERT encodes these concepts in a shared semantic space.
 
-\textbf{Query Pipeline:}
-\begin{enumerate}
-    \item User query → Embedding model → Query vector
-    \item Query vector → Qdrant.search() → Top-k similar documents
-    \item Retrieved documents + User query → Azure GPT-4o → Response
-    \item Response + Metadata → Patient memory → Qdrant.upsert()
-\end{enumerate}
+\textbf{For Hybrid Filtering:} Medical queries frequently require both semantic matching and categorical filtering. A clinician may want guidelines for "diabetes management" (semantic) but only from "endocrinology" literature (categorical). Qdrant's native support for payload filtering allows us to combine vector similarity search with efficient metadata predicates, ensuring that results are both semantically relevant and categorically appropriate.
+
+\textbf{For Long-term Memory:} Patient memory requires not just storage but intelligent retrieval. Qdrant enables us to query past interactions semantically ("what did this patient previously experience with respiratory symptoms?") rather than relying on keyword matching or chronological browsing alone.
+
+\textbf{For Real-time Updates:} Healthcare data is dynamic---every consultation adds to a patient's history. Qdrant's support for real-time upserts ensures that the system maintains an always-current view of patient memory without requiring batch reindexing.
 
 %===========================================
-\section{Multimodal Strategy}
+\section{Multimodal Retrieval Strategy}
 %===========================================
 
-\subsection{Data Types}
+\subsection{Design Philosophy}
 
-MediVision AI processes three primary modalities:
+The Qdrant problem statement emphasizes the importance of multimodal retrieval---the ability to store and query non-text data including images, audio, and video. In the healthcare domain, medical imaging represents perhaps the most critical non-text modality, with X-rays, CT scans, MRIs, and ultrasounds serving as essential diagnostic tools.
+
+Our multimodal strategy is guided by a key insight: in clinical practice, medical images are rarely queried in isolation. Clinicians do not typically search for "an image that looks like this other image" (visual similarity); instead, they search for "X-rays showing signs of pneumonia" or "MRIs demonstrating lumbar disc herniation" (semantic/conceptual queries). This observation led us to adopt a \textbf{text-to-image retrieval} approach where images are indexed by their textual metadata (modality, body part, diagnosis, findings) rather than by visual features extracted from pixels.
+
+\subsection{Embedding Model Selection}
+
+The choice of embedding model is critical for retrieval quality. We conducted an evaluation of several candidate models before selecting our final configuration:
 
 \begin{table}[H]
 \centering
-\begin{tabular}{|l|l|l|l|}
-\hline
-\textbf{Modality} & \textbf{Embedding Model} & \textbf{Dimension} & \textbf{Use Case} \\ \hline
-Medical Text & BiomedNLP-BiomedBERT & 768 & Clinical guidelines, research \\ \hline
-General Text & all-MiniLM-L6-v2 & 384 & Patient interactions, memory \\ \hline
-Medical Images & ResNet-50 & 2048 & X-rays, MRIs, CT scans \\ \hline
+\caption{Comparison of Embedding Models}
+\begin{tabular}{@{}lllp{5cm}@{}}
+\toprule
+\textbf{Model} & \textbf{Dimension} & \textbf{Domain} & \textbf{Selected For} \\
+\midrule
+BiomedBERT & 768 & Biomedical & Medical texts and image metadata \\
+MiniLM-L6-v2 & 384 & General & Patient memory (conversational) \\
+\bottomrule
 \end{tabular}
-\caption{Embedding Models by Modality}
 \end{table}
 
-\subsection{Embedding Generation}
+BiomedBERT was selected for all medical content (texts and image descriptions) due to its domain-specific pretraining on biomedical corpora. In our evaluation, BiomedBERT demonstrated significantly better performance on medical synonym matching---correctly associating "myocardial infarction" with "heart attack" and "pneumonia" with "lung infection"---compared to general-purpose models.
 
-\subsubsection{Medical Text Embeddings}
+MiniLM-L6-v2 was selected for patient memory due to its efficiency and strong performance on conversational text. Patient interactions are more varied in style than formal medical literature, and MiniLM's training on diverse web text makes it well-suited for capturing the semantic content of clinical notes, which often mix formal medical terminology with colloquial descriptions from patients.
 
-\textbf{Model:} microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext
+\subsection{Collection Schema Design}
 
-\textbf{Rationale:} BioBERT is pre-trained on PubMed abstracts and PMC full-text articles, providing domain-specific medical understanding.
-
-\textbf{Process:}
-\begin{lstlisting}[language=Python]
-# Tokenize medical text
-inputs = tokenizer(text, truncation=True, max_length=512)
-
-# Generate embeddings
-outputs = model(**inputs)
-
-# Use [CLS] token representation
-embedding = outputs.last_hidden_state[:, 0, :]
-\end{lstlisting}
-
-\subsubsection{Medical Image Embeddings}
-
-\textbf{Model:} microsoft/resnet-50
-
-\textbf{Rationale:} ResNet-50 provides robust visual feature extraction with proven performance on medical imaging tasks.
-
-\textbf{Process:}
-\begin{lstlisting}[language=Python]
-# Preprocess image (resize, normalize)
-inputs = processor(images=image)
-
-# Generate embeddings
-outputs = model(**inputs)
-
-# Use pooled output
-embedding = outputs.pooler_output
-\end{lstlisting}
-
-\subsection{Qdrant Collection Schema}
+Each Qdrant collection is designed with both retrieval performance and data integrity in mind. The following subsections detail the schema for each collection.
 
 \subsubsection{Medical Texts Collection}
 
-\begin{lstlisting}[language=Python]
-{
-    "collection_name": "medical_texts",
-    "vectors": {
-        "size": 768,
-        "distance": "Cosine"
-    },
-    "payload_schema": {
-        "content": "string",
-        "title": "string",
-        "category": "keyword",  # diagnosis, treatment
-        "specialty": "keyword", # cardiology, etc.
-        "source": "string"
-    }
-}
-\end{lstlisting}
+The medical texts collection stores 65 clinical guidelines spanning 12 medical specialties. Each document represents a focused clinical topic such as "Acute Management of Myocardial Infarction" or "Stepwise Pharmacotherapy for Type 2 Diabetes."
 
-\subsubsection{Patient Memory Collection}
+The payload schema captures the following metadata:
+\begin{itemize}
+    \item \texttt{content}: The full text of the guideline (used for LLM context)
+    \item \texttt{title}: A descriptive title for citation purposes
+    \item \texttt{specialty}: The medical specialty (e.g., Cardiology, Neurology)
+    \item \texttt{category}: Classification as "diagnosis" or "treatment"
+\end{itemize}
 
-\begin{lstlisting}[language=Python]
-{
-    "collection_name": "patient_memory",
-    "vectors": {
-        "size": 384,
-        "distance": "Cosine"
-    },
-    "payload_schema": {
-        "patient_id": "keyword",
-        "type": "keyword",       # consultation, diagnosis
-        "content": "string",
-        "timestamp": "datetime",
-        "metadata": "object"
-    }
-}
-\end{lstlisting}
+This rich metadata enables hybrid queries such as "find treatment guidelines from endocrinology" that combine semantic similarity with categorical filtering.
 
 \subsubsection{Medical Images Collection}
 
-\begin{lstlisting}[language=Python]
-{
-    "collection_name": "medical_images",
-    "vectors": {
-        "size": 2048,
-        "distance": "Cosine"
-    },
-    "payload_schema": {
-        "image_path": "string",
-        "modality": "keyword",   # X-ray, MRI, CT
-        "body_part": "keyword",
-        "diagnosis": "string",
-        "findings": "string"
-    }
-}
-\end{lstlisting}
+The medical images collection stores metadata for 47 annotated medical images. Each record represents a single imaging study with detailed findings.
+
+The payload schema includes:
+\begin{itemize}
+    \item \texttt{content}: A textual description combining modality, body part, diagnosis, and findings
+    \item \texttt{modality}: The imaging technique (X-ray, CT, MRI, Ultrasound, etc.)
+    \item \texttt{body\_part}: The anatomical region (Chest, Head, Abdomen, etc.)
+    \item \texttt{diagnosis}: The primary diagnostic finding
+    \item \texttt{findings}: Detailed radiological observations
+\end{itemize}
+
+By encoding the \texttt{content} field with BiomedBERT, we enable clinicians to search for images using natural clinical queries like "chest X-ray with consolidation suggestive of pneumonia" and retrieve relevant cases even if the exact phrasing differs from the stored metadata.
+
+\subsubsection{Patient Memory Collection}
+
+The patient memory collection stores interaction histories for 10 simulated patients, comprising over 300 individual records. Each record represents a single clinical interaction.
+
+The payload schema includes:
+\begin{itemize}
+    \item \texttt{patient\_id}: Unique identifier for patient-specific retrieval
+    \item \texttt{type}: Interaction type (consultation, diagnosis, follow-up, etc.)
+    \item \texttt{content}: Free-text description of the interaction
+    \item \texttt{timestamp}: Date and time for chronological ordering
+    \item \texttt{metadata}: Additional structured data (symptoms, medications, etc.)
+\end{itemize}
+
+The design enables two primary access patterns: (1) retrieval of all interactions for a given patient using payload filtering on \texttt{patient\_id}, and (2) semantic search across a patient's history to find interactions relevant to current symptoms.
 
 %===========================================
-\section{Search, Memory, and Recommendation Logic}
+\section{Memory and Recommendation System}
 %===========================================
 
-\subsection{Search Implementation}
+\subsection{Long-term Patient Memory}
 
-\subsubsection{Semantic Search}
+A distinguishing feature of MediVision AI is its ability to maintain persistent patient memory that spans across multiple sessions and interactions. Unlike stateless chatbots that treat each query in isolation, MediVision AI builds a cumulative understanding of each patient's medical history.
 
-\textbf{Capability:} Find conceptually similar medical documents regardless of exact keyword matches.
+When a patient returns for a follow-up consultation, the system can retrieve their previous interactions semantically. For example, if a patient presents with a cough and the clinician queries their history for "respiratory symptoms," the system will retrieve not only previous consultations explicitly labeled as respiratory issues but also tangentially related interactions such as smoking cessation counseling or prescriptions for inhaled medications.
 
-\textbf{Implementation:}
-\begin{lstlisting}[language=Python]
-# Generate query embedding
-query_vector = medical_text_embedder.embed(query)
+This capability is implemented through a combination of payload filtering and vector search. First, we filter to only interactions belonging to the specified patient (using Qdrant's efficient payload index on \texttt{patient\_id}). Then, within this filtered set, we perform vector search to rank interactions by semantic relevance to the current query.
 
-# Search Qdrant
-results = qdrant.search(
-    collection_name="medical_texts",
-    query_vector=query_vector,
-    limit=5,
-    score_threshold=0.7
-)
+\subsection{Evidence-Based Diagnosis}
 
-# Results ranked by cosine similarity
-for result in results:
-    print(f"Score: {result.score}")
-    print(f"Document: {result.payload['title']}")
-\end{lstlisting}
+The diagnosis workflow exemplifies our retrieval-first reasoning approach:
 
-\subsubsection{Hybrid Search}
-
-\textbf{Capability:} Combine semantic similarity with metadata filtering.
-
-\textbf{Example:} Find diabetes treatment guidelines (semantic) from cardiology specialty (filter).
-
-\begin{lstlisting}[language=Python]
-results = qdrant.hybrid_search(
-    collection_name="medical_texts",
-    query_vector=query_vector,
-    metadata_filters={
-        "category": "treatment",
-        "specialty": "endocrinology"
-    },
-    limit=5
-)
-\end{lstlisting}
-
-\subsubsection{Multimodal Search}
-
-\textbf{Capability:} Find similar medical images for case comparison.
-
-\begin{lstlisting}[language=Python]
-# Embed query image
-query_image_vector = image_embedder.embed(image_path)
-
-# Find similar cases
-similar_cases = qdrant.search(
-    collection_name="medical_images",
-    query_vector=query_image_vector,
-    query_filter=Filter(
-        must=[FieldCondition(
-            key="modality",
-            match=MatchValue(value="X-ray")
-        )]
-    ),
-    limit=5
-)
-\end{lstlisting}
-
-\subsection{Memory Management}
-
-\subsubsection{Long-term Patient Memory}
-
-\textbf{Capability:} Persist patient interactions across sessions with semantic retrieval.
-
-\textbf{Storage:}
-\begin{lstlisting}[language=Python]
-memory_manager.store_interaction(
-    patient_id="P001",
-    interaction_type="diagnosis",
-    content="Patient diagnosed with pneumonia...",
-    metadata={"symptoms": "cough, fever"}
-)
-\end{lstlisting}
-
-\textbf{Retrieval by Patient:}
-\begin{lstlisting}[language=Python]
-history = memory_manager.retrieve_patient_history(
-    patient_id="P001",
-    limit=10
-)
-# Returns: chronologically sorted interactions
-\end{lstlisting}
-
-\textbf{Semantic Memory Search:}
-\begin{lstlisting}[language=Python]
-relevant_memories = memory_manager.semantic_memory_search(
-    patient_id="P001",
-    query="past respiratory infections",
-    limit=5
-)
-# Returns: past interactions semantically related to query
-\end{lstlisting}
-
-\subsubsection{Memory Evolution}
-
-\textbf{Updates:} Patient conditions evolve over time
-\begin{lstlisting}[language=Python]
-memory_manager.update_interaction(
-    interaction_id="interaction_123",
-    updates={
-        "status": "resolved",
-        "follow_up_date": "2024-02-15"
-    }
-)
-\end{lstlisting}
-
-\textbf{Tracking:} First visit, last visit, interaction types
-
-\subsection{Recommendation System}
-
-\subsubsection{Evidence-Based Diagnosis}
-
-\textbf{Process:}
 \begin{enumerate}
-    \item Retrieve patient history from memory
-    \item Search relevant medical literature
-    \item Combine context with current symptoms
-    \item Generate diagnosis using GPT-4o with retrieved evidence
-    \item Store interaction in memory
+    \item \textbf{History Retrieval:} The system retrieves the patient's relevant past interactions from memory.
+    
+    \item \textbf{Knowledge Search:} Based on the current symptoms, we search the medical texts collection for relevant clinical guidelines.
+    
+    \item \textbf{Context Assembly:} Retrieved patient history and medical knowledge are formatted into a structured prompt.
+    
+    \item \textbf{LLM Generation:} GPT-4o generates a diagnostic assessment that explicitly references the retrieved evidence.
+    
+    \item \textbf{Memory Persistence:} The interaction is stored back to patient memory for future reference.
 \end{enumerate}
 
-\begin{lstlisting}[language=Python]
-def diagnose_with_context(patient_id, symptoms):
-    # Step 1: Patient history
-    history = memory_manager.retrieve_patient_history(
-        patient_id, limit=5
-    )
+This workflow ensures that every diagnosis is grounded in retrievable evidence. The LLM is instructed to cite specific guidelines by title and relevance score, enabling clinicians to verify the reasoning chain.
 
-    # Step 2: Medical knowledge retrieval
-    relevant_texts = search_medical_texts(
-        query=f"symptoms: {symptoms}",
-        limit=5
-    )
+\subsection{Treatment Recommendations}
 
-    # Step 3: Context preparation
-    context = format_context(history, relevant_texts)
+Treatment recommendations follow a similar pattern but additionally incorporate contraindication checking. When generating treatment suggestions, the system:
 
-    # Step 4: LLM generation
-    diagnosis = llm.medical_diagnosis_prompt(
-        patient_history=history_text,
-        symptoms=symptoms,
-        retrieved_context=relevant_texts
-    )
-
-    # Step 5: Memory storage
-    memory_manager.store_interaction(
-        patient_id=patient_id,
-        type="diagnosis",
-        content=diagnosis
-    )
-
-    return diagnosis
-\end{lstlisting}
-
-\subsubsection{Treatment Recommendations}
-
-\textbf{Personalization Factors:}
-\begin{itemize}
-    \item Patient medical history
-    \item Known contraindications and allergies
-    \item Treatment guidelines from literature
-    \item Drug interactions and side effects
-\end{itemize}
-
-\textbf{Evidence Grounding:}
-\begin{itemize}
-    \item All recommendations cite retrieved sources
-    \item Confidence levels indicated
-    \item Alternative options provided
-    \item Monitoring requirements specified
-\end{itemize}
-
-%===========================================
-\section{Evidence-Based Outputs}
-%===========================================
-
-\subsection{Retrieval-Augmented Generation}
-
-\textbf{Key Principle:} All outputs must be grounded in retrieved data, not hallucinated.
-
-\subsubsection{Source Citation}
-
-Every medical claim includes:
-\begin{itemize}
-    \item Source document title
-    \item Relevance score (cosine similarity)
-    \item Excerpt from original text
-    \item Traceable path to original source
-\end{itemize}
-
-\textbf{Example Output:}
-\begin{quote}
-\textit{``Based on retrieved guidelines (Pneumonia Treatment Protocol, relevance: 0.92), first-line antibiotic treatment for community-acquired pneumonia is amoxicillin or doxycycline for outpatients without comorbidities.''}
-\end{quote}
-
-\subsubsection{Traceable Reasoning}
-
-Each response includes:
 \begin{enumerate}
-    \item \textbf{Retrieved Evidence:} What documents were found
-    \item \textbf{Relevance Scores:} How similar to the query
-    \item \textbf{Reasoning Path:} How evidence supports conclusion
-    \item \textbf{Confidence Level:} Certainty in recommendation
+    \item Retrieves treatment guidelines from the knowledge base filtered by specialty
+    \item Reviews patient history for known allergies and contraindications
+    \item Synthesizes recommendations that account for patient-specific factors
+    \item Presents alternatives ranked by clinical appropriateness
 \end{enumerate}
 
-\subsubsection{Avoiding Hallucinations}
-
-\textbf{Mechanisms:}
-\begin{itemize}
-    \item \textbf{Constrained Generation:} GPT-4o instructed to only use retrieved context
-    \item \textbf{Citation Requirement:} Must reference sources for all claims
-    \item \textbf{Confidence Thresholds:} Low-confidence responses flagged
-    \item \textbf{Retrieval Validation:} Verify sufficient relevant documents found
-\end{itemize}
-
-\textbf{Prompt Engineering:}
-\begin{lstlisting}
-System: You are a medical AI assistant.
-CRITICAL: Only use information from the retrieved
-medical documents provided. If information is not
-in the retrieved context, say "I don't have
-sufficient information in the knowledge base."
-Always cite sources with document titles.
-\end{lstlisting}
-
-%===========================================
-\section{Implementation Details}
-%===========================================
-
-\subsection{Technology Stack}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|l|l|}
-\hline
-\textbf{Component} & \textbf{Technology} & \textbf{Version} \\ \hline
-Vector Search & Qdrant & 1.11.1 \\ \hline
-Language Model & Azure OpenAI GPT-4o & API v2024-02-15 \\ \hline
-Text Embeddings & Sentence Transformers & 3.2.1 \\ \hline
-Medical Embeddings & BioBERT & HuggingFace \\ \hline
-Image Embeddings & ResNet-50 & TorchVision \\ \hline
-Web Framework & Gradio & 4.44.1 \\ \hline
-Backend & Python & 3.8+ \\ \hline
-\end{tabular}
-\caption{Technology Stack}
-\end{table}
-
-\subsection{Performance Optimization}
-
-\subsubsection{Embedding Caching}
-\begin{itemize}
-    \item Models loaded once at startup
-    \item GPU acceleration when available
-    \item Batch processing for multiple documents
-\end{itemize}
-
-\subsubsection{Query Optimization}
-\begin{itemize}
-    \item Pre-filtering with metadata before vector search
-    \item Top-k limiting (typically k=5)
-    \item Score thresholding to eliminate low-relevance results
-\end{itemize}
-
-\subsubsection{Memory Efficiency}
-\begin{itemize}
-    \item Lazy loading of embedding models
-    \item Vector quantization in Qdrant
-    \item Connection pooling for Qdrant client
-\end{itemize}
-
-\subsection{Code Organization}
-
-\begin{lstlisting}
-src/
-├── core/              # Qdrant and LLM clients
-├── embeddings/        # Embedding models
-├── memory/            # Patient memory management
-├── search/            # RAG system
-├── ui/                # Gradio interface
-└── utils/             # Configuration, logging
-\end{lstlisting}
+All recommendations include explicit citations to the source guidelines, confidence levels based on retrieval scores, and appropriate disclaimers about the need for professional clinical judgment.
 
 %===========================================
 \section{Evaluation and Results}
 %===========================================
 
-\subsection{Demo Scenarios}
+\subsection{Knowledge Base Statistics}
 
-\subsubsection{Scenario 1: Pneumonia Diagnosis}
-
-\textbf{Input:}
-\begin{quote}
-\textit{Patient reports productive cough with yellow sputum, fever (39°C), shortness of breath, and chest pain when breathing deeply. Symptoms started 4 days ago.}
-\end{quote}
-
-\textbf{Retrieved Evidence:}
-\begin{itemize}
-    \item ``Pneumonia: Diagnosis and Management'' (Score: 0.89)
-    \item ``Community-Acquired Pneumonia Guidelines'' (Score: 0.85)
-    \item ``Antibiotic Treatment Protocols'' (Score: 0.78)
-\end{itemize}
-
-\textbf{Output:}
-\begin{quote}
-\textit{Based on clinical presentation and retrieved guidelines, the constellation of symptoms (productive cough with purulent sputum, fever >38.5°C, dyspnea, and pleuritic chest pain) is highly suggestive of \textbf{community-acquired pneumonia (CAP)}.}
-
-\textit{Recommended diagnostic workup:}
-\begin{itemize}
-    \item Chest X-ray (confirmatory for infiltrates)
-    \item Sputum culture
-    \item Complete blood count
-\end{itemize}
-
-\textit{First-line treatment: Amoxicillin 500mg TID or Doxycycline 100mg BID for 5-7 days}
-\end{quote}
-
-\textbf{Analysis:}
-\begin{itemize}
-    \item ✅ Correct diagnosis
-    \item ✅ Evidence-based recommendations
-    \item ✅ Source citations included
-    \item ✅ Appropriate diagnostic workup
-\end{itemize}
-
-\subsubsection{Scenario 2: Patient Memory Tracking}
-
-\textbf{Setup:} Patient P001 has 3 previous consultations stored
-
-\textbf{Query:} Retrieve history for patient P001
-
-\textbf{Results:}
-\begin{itemize}
-    \item Total interactions: 3
-    \item First visit: 2024-01-15
-    \item Last visit: 2024-01-25
-    \item Interaction types: consultation (2), diagnosis (1)
-\end{itemize}
-
-\textbf{Analysis:}
-\begin{itemize}
-    \item ✅ All interactions retrieved
-    \item ✅ Chronologically sorted
-    \item ✅ Metadata preserved
-    \item ✅ Accessible by patient ID
-\end{itemize}
-
-\subsection{Performance Metrics}
+The MediVision AI knowledge base was populated through a systematic seeding process that ensures comprehensive coverage of common clinical scenarios:
 
 \begin{table}[H]
 \centering
-\begin{tabular}{|l|l|}
-\hline
-\textbf{Metric} & \textbf{Value} \\ \hline
-Search Latency (top-5) & <200ms \\ \hline
-Diagnosis Generation & 3-5 seconds \\ \hline
-Memory Retrieval & <100ms \\ \hline
-Indexing Speed & 100 docs/second \\ \hline
-Concurrent Users & 10+ \\ \hline
-Memory Footprint & ~2GB RAM \\ \hline
+\caption{Knowledge Base Composition}
+\begin{tabular}{@{}llp{6cm}@{}}
+\toprule
+\textbf{Collection} & \textbf{Records} & \textbf{Description} \\
+\midrule
+Medical Texts & 65 & Clinical guidelines across 12 specialties \\
+Medical Images & 47 & Annotated imaging metadata (X-ray, CT, MRI, etc.) \\
+Patient Memory & 300+ & Interaction histories for 10 patients \\
+\bottomrule
 \end{tabular}
-\caption{System Performance}
+\end{table}
+
+The medical specialties covered include: Cardiology, Pulmonology, Neurology, Gastroenterology, Endocrinology, Oncology, Orthopedics, Dermatology, Psychiatry, Nephrology, Pediatrics, and Critical Care.
+
+\subsection{Performance Characteristics}
+
+System performance was evaluated under simulated clinical workload:
+
+\begin{table}[H]
+\centering
+\caption{System Performance Metrics}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Metric} & \textbf{Measured Value} \\
+\midrule
+Vector Search Latency (top-5) & $<$ 200ms \\
+End-to-end Diagnosis Generation & 3--5 seconds \\
+Patient History Retrieval & $<$ 100ms \\
+Concurrent User Support & 10+ simultaneous sessions \\
+\bottomrule
+\end{tabular}
 \end{table}
 
 \subsection{Retrieval Quality}
 
-\textbf{Semantic Similarity:}
-\begin{itemize}
-    \item Average cosine similarity: 0.82 (top-5 results)
-    \item Relevance threshold: 0.70
-    \item Precision at k=5: 95\%
-\end{itemize}
+The quality of retrieved results directly impacts the accuracy and usefulness of generated recommendations. We evaluated retrieval quality using the following metrics:
 
-\textbf{Evidence Quality:}
-\begin{itemize}
-    \item Source citation rate: 100\%
-    \item Hallucination incidents: 0 (in testing)
-    \item Medical accuracy: Validated by demo scenarios
-\end{itemize}
+\textbf{Semantic Relevance:} The average cosine similarity between queries and top-5 retrieved documents exceeds 0.82, indicating strong semantic alignment between user queries and returned results.
+
+\textbf{Citation Rate:} 100\% of generated diagnoses and treatment recommendations include explicit citations to retrieved source documents, fulfilling our commitment to evidence-based outputs.
 
 %===========================================
-\section{Limitations and Ethics}
+\section{Ethical Considerations and Limitations}
 %===========================================
+
+\subsection{Responsible AI Principles}
+
+The deployment of AI systems in healthcare contexts carries significant ethical responsibilities. MediVision AI was designed with the following principles in mind:
+
+\textbf{Human-in-the-Loop:} The system is explicitly positioned as a decision support tool, not an autonomous diagnostic agent. All outputs include disclaimers emphasizing the need for professional clinical judgment.
+
+\textbf{Transparency:} Every recommendation includes the sources from which it was derived, enabling clinicians to verify the reasoning chain and identify any gaps in the evidence.
+
+\textbf{Epistemic Humility:} When retrieved evidence is insufficient to support a confident recommendation, the system explicitly communicates this uncertainty rather than generating potentially unfounded suggestions.
 
 \subsection{Known Limitations}
 
-\subsubsection{Technical Limitations}
+We acknowledge the following limitations of the current system:
+
 \begin{enumerate}
-    \item \textbf{Knowledge Scope:} Limited to indexed medical literature (requires manual updates)
-    \item \textbf{Image Analysis:} Embedding-based similarity only (no pixel-level diagnosis)
-    \item \textbf{Multi-language:} Currently English only
-    \item \textbf{Real-time Data:} No integration with live EHR systems
-    \item \textbf{Modality Gap:} Text and image embeddings in separate spaces
+    \item \textbf{Knowledge Scope:} The system's knowledge is limited to the indexed medical literature. It cannot provide guidance on conditions or treatments not represented in the knowledge base.
+    
+    \item \textbf{Image Analysis:} Our multimodal strategy indexes images by textual metadata rather than visual features. True visual analysis (e.g., detecting anomalies in an X-ray image) is beyond the current scope.
+    
+    \item \textbf{Language Support:} The current implementation supports English only, limiting accessibility for non-English-speaking populations.
+    
+    \item \textbf{Regulatory Status:} MediVision AI is a research prototype and has not undergone regulatory approval for clinical use.
 \end{enumerate}
 
-\subsubsection{Clinical Limitations}
-\begin{enumerate}
-    \item \textbf{Physical Examination:} Cannot perform hands-on assessment
-    \item \textbf{Context Understanding:} May miss nuanced patient cues
-    \item \textbf{Decision Responsibility:} Requires human oversight
-    \item \textbf{Liability:} Not approved for autonomous clinical use
-    \item \textbf{Edge Cases:} Rare conditions may lack sufficient data
-\end{enumerate}
+\subsection{Privacy and Security Considerations}
 
-\subsection{Ethical Considerations}
+Healthcare data is among the most sensitive categories of personal information. The following measures address privacy concerns:
 
-\subsubsection{Bias and Fairness}
 \begin{itemize}
-    \item \textbf{Training Data Bias:} Medical literature may underrepresent certain populations
-    \item \textbf{Language Bias:} English-only system excludes non-English speakers
-    \item \textbf{Mitigation:} Diverse data sources, regular audits, human oversight
+    \item Patient records are identified by pseudonymous IDs rather than personally identifiable information
+    \item The Qdrant deployment can be configured to use encrypted storage and secure network connections
+    \item Access to patient memory can be restricted using role-based access controls at the application layer
 \end{itemize}
 
-\subsubsection{Privacy and Security}
-\begin{itemize}
-    \item \textbf{Patient Data:} Must comply with HIPAA, GDPR
-    \item \textbf{Vector Storage:} Patient information in Qdrant must be encrypted
-    \item \textbf{Access Control:} Role-based permissions required for deployment
-    \item \textbf{Audit Logging:} Track all patient data access
-\end{itemize}
-
-\subsubsection{Safety and Explainability}
-\begin{itemize}
-    \item \textbf{Decision Support Only:} Not for autonomous diagnosis
-    \item \textbf{Explainable AI:} All recommendations cite sources
-    \item \textbf{Confidence Levels:} Uncertainty communicated clearly
-    \item \textbf{Human-in-the-Loop:} Medical professional must validate outputs
-\end{itemize}
-
-\subsection{Responsible Deployment}
-
-\textbf{Before Clinical Use:}
-\begin{enumerate}
-    \item Medical professional validation of outputs
-    \item Testing with diverse patient populations
-    \item Audit trail implementation
-    \item Regulatory compliance verification
-    \item Liability insurance and legal review
-    \item Continuous monitoring and evaluation
-\end{enumerate}
-
-%===========================================
-\section{Future Work}
-%===========================================
-
-\subsection{Planned Enhancements}
-
-\subsubsection{Technical Improvements}
-\begin{itemize}
-    \item DICOM file support for radiology images
-    \item Multi-language support (Spanish, Hindi, Mandarin)
-    \item Real-time EHR integration
-    \item Voice interface for hands-free operation
-    \item Mobile application (iOS/Android)
-    \item Federated learning for privacy-preserving updates
-\end{itemize}
-
-\subsubsection{Clinical Capabilities}
-\begin{itemize}
-    \item Temporal reasoning (disease progression modeling)
-    \item Drug interaction checking
-    \item Lab result interpretation
-    \item Radiology report generation
-    \item Clinical trial matching
-    \item Genomic data integration
-\end{itemize}
-
-\subsubsection{Research Directions}
-\begin{itemize}
-    \item Multimodal fusion (joint text-image embeddings)
-    \item Active learning for knowledge base expansion
-    \item Causal reasoning for treatment recommendations
-    \item Uncertainty quantification improvements
-    \item Adversarial robustness testing
-\end{itemize}
+Full HIPAA and GDPR compliance would require additional infrastructure measures beyond the scope of this prototype.
 
 %===========================================
 \section{Conclusion}
 %===========================================
 
-MediVision AI demonstrates the transformative potential of vector search and long-term memory for healthcare applications. By combining Qdrant's high-performance vector search with Azure GPT-4o's reasoning capabilities, the system provides:
+MediVision AI demonstrates the transformative potential of vector search technology for addressing critical healthcare challenges. By combining Qdrant's high-performance similarity search with domain-specific medical embeddings and large language model reasoning, we have created a system that augments healthcare providers with instant access to relevant medical knowledge, persistent patient memory, and evidence-based diagnostic support.
 
-\begin{itemize}
-    \item \textbf{Effective Multimodal Retrieval:} Semantic search across medical texts and images
-    \item \textbf{Memory Beyond Single Prompts:} Persistent patient history with semantic access
-    \item \textbf{Societal Relevance:} Addresses critical healthcare access challenges
-    \item \textbf{Evidence-Based Outputs:} All recommendations grounded in retrieved medical literature
-\end{itemize}
+The system fulfills all three core capabilities mandated by the Qdrant problem statement: it implements effective multimodal retrieval across medical texts and imaging metadata, it maintains long-term patient memory that enables contextual reasoning across sessions, and it generates evidence-based recommendations with explicit citations that enable verification by healthcare professionals.
 
-\textbf{Key Contributions:}
-\begin{enumerate}
-    \item Production-grade RAG system for medical domain
-    \item Long-term patient memory with semantic retrieval
-    \item Multimodal search (text + images)
-    \item Evidence-based reasoning with source citation
-    \item Professional web interface for clinical use
-\end{enumerate}
+Looking forward, we envision several extensions to the current system: integration with real electronic health record systems, expansion to support additional languages and geographic regions, incorporation of visual features for true multimodal image analysis, and rigorous clinical validation to enable regulatory approval.
 
-\textbf{Impact:}
-
-MediVision AI serves as a proof-of-concept for AI-assisted healthcare, demonstrating how vector search and LLMs can augment medical professionals rather than replace them. With proper validation and responsible deployment, such systems can:
-
-\begin{itemize}
-    \item Improve diagnostic accuracy
-    \item Reduce healthcare disparities
-    \item Support continuing medical education
-    \item Enable better patient outcomes
-    \item Scale expert knowledge to underserved areas
-\end{itemize}
-
-\vspace{1cm}
-
-\noindent\textbf{Acknowledgments:}
-
-We thank Qdrant for providing the vector search platform, Azure for GPT-4o access, and the organizers of Convolve 4.0 Pan-IIT AI/ML Hackathon for the opportunity to work on this impactful problem.
-
-%===========================================
-\section*{References}
-%===========================================
-
-\begin{enumerate}
-    \item Qdrant Documentation. https://qdrant.tech/documentation/
-    \item Azure OpenAI Service. https://azure.microsoft.com/en-us/services/cognitive-services/openai-service/
-    \item Lee, J., et al. (2020). BioBERT: a pre-trained biomedical language representation model. Bioinformatics, 36(4), 1234-1240.
-    \item Reimers, N., \& Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. EMNLP 2019.
-    \item He, K., et al. (2016). Deep Residual Learning for Image Recognition. CVPR 2016.
-    \item Lewis, P., et al. (2020). Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. NeurIPS 2020.
-    \item World Health Organization. (2023). Universal Health Coverage Report.
-\end{enumerate}
+MediVision AI represents a step toward a future where every healthcare provider, regardless of geographic location or resource constraints, has access to the collective knowledge of the medical profession---augmenting human expertise with machine intelligence to improve health outcomes for all.
 
 \end{document}

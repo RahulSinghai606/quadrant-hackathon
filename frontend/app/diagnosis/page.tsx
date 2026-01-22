@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar';
-import GlassCard from '@/components/GlassCard';
+import ClinicalCard from '@/components/ClinicalCard';
 import AnimatedButton from '@/components/AnimatedButton';
-import { FaStethoscope, FaUser, FaClipboardList, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { FaStethoscope, FaUser, FaClipboardList, FaCheckCircle } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
@@ -79,65 +78,61 @@ export default function DiagnosisPage() {
     <div className="min-h-screen">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="container-wide section">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-4xl font-bold gradient-text mb-2">
-            🩺 Medical Diagnosis
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
+            <span className="text-clinical-accent">🩺</span> Medical Diagnosis
           </h1>
-          <p className="text-slate-600 text-lg">
+          <p className="text-clinical-muted text-lg">
             AI-powered diagnosis with evidence-based reasoning
           </p>
-        </motion.div>
+        </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Input Section */}
           <div className="space-y-6">
-            <GlassCard delay={0.1}>
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <FaUser className="text-medical-blue" />
+            <ClinicalCard>
+              <h2 className="text-lg font-display font-semibold mb-4 flex items-center gap-2">
+                <FaUser className="text-clinical-accent" />
                 Patient Information
               </h2>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-medium text-clinical-muted mb-2">
                     Patient ID
                   </label>
                   <input
                     type="text"
                     value={patientId}
                     onChange={(e) => setPatientId(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-medical-blue focus:ring-2 focus:ring-medical-blue/20 outline-none transition-all"
+                    className="clinical-input"
                     placeholder="Enter patient identifier"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-medium text-clinical-muted mb-2">
                     Symptoms Description
                   </label>
                   <textarea
                     value={symptoms}
                     onChange={(e) => setSymptoms(e.target.value)}
                     rows={6}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-medical-blue focus:ring-2 focus:ring-medical-blue/20 outline-none transition-all resize-none"
+                    className="clinical-input resize-none"
                     placeholder="Describe patient symptoms in detail..."
                   />
                 </div>
 
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-3 cursor-pointer group">
                   <input
                     type="checkbox"
                     checked={useHistory}
                     onChange={(e) => setUseHistory(e.target.checked)}
-                    className="w-5 h-5 text-medical-blue rounded focus:ring-medical-blue"
+                    className="w-5 h-5 rounded bg-clinical-elevated border-clinical-border text-clinical-accent focus:ring-clinical-accent focus:ring-offset-clinical-bg"
                   />
-                  <span className="text-sm text-slate-700">
+                  <span className="text-sm text-clinical-muted group-hover:text-clinical-text transition-colors">
                     Use patient medical history in analysis
                   </span>
                 </label>
@@ -152,131 +147,103 @@ export default function DiagnosisPage() {
                   {loading ? 'Analyzing...' : 'Generate Diagnosis'}
                 </AnimatedButton>
               </div>
-            </GlassCard>
+            </ClinicalCard>
 
             {/* Demo Scenarios */}
-            <GlassCard delay={0.2}>
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <FaClipboardList className="text-medical-purple" />
-                Quick Load Demo Scenarios
+            <ClinicalCard>
+              <h2 className="text-lg font-display font-semibold mb-4 flex items-center gap-2">
+                <FaClipboardList className="text-clinical-accent" />
+                Demo Scenarios
               </h2>
 
               <div className="space-y-2">
-                {demoScenarios.map((scenario, index) => (
-                  <motion.button
+                {demoScenarios.map((scenario) => (
+                  <button
                     key={scenario.id}
-                    whileHover={{ scale: 1.02, x: 5 }}
-                    whileTap={{ scale: 0.98 }}
                     onClick={() => loadDemoScenario(scenario)}
-                    className="w-full text-left p-4 rounded-xl border-2 border-slate-200 hover:border-medical-blue transition-all"
+                    className="w-full text-left p-4 rounded-xl border border-clinical-border bg-clinical-elevated hover:border-clinical-accent hover:bg-clinical-accent/5 transition-all duration-200 group"
                   >
-                    <div className="font-semibold text-medical-blue mb-1">
+                    <div className="font-semibold text-clinical-accent mb-1 group-hover:text-cyan-400">
                       {scenario.id}: {scenario.name}
                     </div>
-                    <div className="text-sm text-slate-600">
-                      {scenario.description.slice(0, 100)}...
+                    <div className="text-sm text-clinical-muted line-clamp-2">
+                      {scenario.description}
                     </div>
-                  </motion.button>
+                  </button>
                 ))}
               </div>
-            </GlassCard>
+            </ClinicalCard>
           </div>
 
           {/* Results Section */}
           <div className="space-y-6">
-            <AnimatePresence mode="wait">
-              {diagnosis ? (
-                <motion.div
-                  key="diagnosis"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                >
-                  <GlassCard delay={0}>
-                    <div className="flex items-center gap-2 mb-4">
-                      <FaCheckCircle className="text-green-500 text-2xl" />
-                      <h2 className="text-xl font-bold">Diagnosis Result</h2>
+            {diagnosis ? (
+              <>
+                <ClinicalCard variant="accent">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+                      <FaCheckCircle className="text-emerald-400" />
                     </div>
+                    <h2 className="text-lg font-display font-semibold">Diagnosis Result</h2>
+                  </div>
 
-                    <div className="prose prose-slate max-w-none">
-                      <ReactMarkdown>{diagnosis}</ReactMarkdown>
-                    </div>
-                  </GlassCard>
+                  <div className="prose prose-sm max-w-none">
+                    <ReactMarkdown>{diagnosis}</ReactMarkdown>
+                  </div>
+                </ClinicalCard>
 
-                  {evidence.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 }}
-                      className="mt-6"
-                    >
-                      <GlassCard delay={0}>
-                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                          📚 Retrieved Medical Evidence
-                        </h2>
+                {evidence.length > 0 && (
+                  <ClinicalCard>
+                    <h2 className="text-lg font-display font-semibold mb-4">
+                      📚 Retrieved Medical Evidence
+                    </h2>
 
-                        <div className="space-y-4">
-                          {evidence.slice(0, 3).map((ev, index) => (
-                            <motion.div
-                              key={index}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.1 }}
-                              className="p-4 rounded-xl bg-white/50 border border-slate-200"
-                            >
-                              <div className="flex justify-between items-start mb-2">
-                                <h3 className="font-semibold text-medical-blue">
-                                  {ev.title}
-                                </h3>
-                                <span className="px-3 py-1 rounded-full bg-medical-gradient text-white text-xs font-semibold">
-                                  Score: {ev.relevance_score?.toFixed(3)}
-                                </span>
-                              </div>
-                              <p className="text-sm text-slate-600 line-clamp-3">
-                                {ev.content}
-                              </p>
-                              {(ev.category || ev.specialty) && (
-                                <div className="flex gap-2 mt-2">
-                                  {ev.category && (
-                                    <span className="px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs">
-                                      {ev.category}
-                                    </span>
-                                  )}
-                                  {ev.specialty && (
-                                    <span className="px-2 py-1 rounded-md bg-purple-100 text-purple-700 text-xs">
-                                      {ev.specialty}
-                                    </span>
-                                  )}
-                                </div>
+                    <div className="space-y-3">
+                      {evidence.slice(0, 3).map((ev, index) => (
+                        <div
+                          key={index}
+                          className="p-4 rounded-xl bg-clinical-elevated border border-clinical-border"
+                        >
+                          <div className="flex justify-between items-start gap-4 mb-2">
+                            <h3 className="font-semibold text-clinical-accent text-sm">
+                              {ev.title}
+                            </h3>
+                            <span className="tag shrink-0">
+                              {ev.relevance_score?.toFixed(3)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-clinical-muted line-clamp-3">
+                            {ev.content}
+                          </p>
+                          {(ev.category || ev.specialty) && (
+                            <div className="flex gap-2 mt-3">
+                              {ev.category && (
+                                <span className="tag-warm">{ev.category}</span>
                               )}
-                            </motion.div>
-                          ))}
+                              {ev.specialty && (
+                                <span className="tag-coral">{ev.specialty}</span>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </GlassCard>
-                    </motion.div>
-                  )}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="placeholder"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <GlassCard delay={0.3}>
-                    <div className="text-center py-12">
-                      <FaStethoscope className="text-6xl text-slate-300 mx-auto mb-4" />
-                      <p className="text-slate-500 text-lg">
-                        Enter patient symptoms and click "Generate Diagnosis"
-                      </p>
-                      <p className="text-slate-400 text-sm mt-2">
-                        or load a demo scenario to get started
-                      </p>
+                      ))}
                     </div>
-                  </GlassCard>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </ClinicalCard>
+                )}
+              </>
+            ) : (
+              <ClinicalCard className="h-full flex flex-col items-center justify-center text-center py-16">
+                <div className="w-16 h-16 rounded-full bg-clinical-elevated border border-clinical-border flex items-center justify-center mb-4">
+                  <FaStethoscope className="text-3xl text-clinical-muted" />
+                </div>
+                <p className="text-clinical-muted text-lg mb-2">
+                  Enter patient symptoms and click "Generate Diagnosis"
+                </p>
+                <p className="text-clinical-muted/60 text-sm">
+                  or load a demo scenario to get started
+                </p>
+              </ClinicalCard>
+            )}
           </div>
         </div>
       </div>
