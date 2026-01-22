@@ -1,0 +1,46 @@
+# Core Dependencies
+qdrant-client==1.11.1
+openai==1.51.2
+python-dotenv==1.0.1
+
+# ML & Embeddings
+sentence-transformers==3.2.1
+transformers==4.45.1
+torch==2.4.1
+torchvision==0.19.1
+timm==1.0.9
+
+# Medical Image Processing
+Pillow==10.4.0
+opencv-python==4.10.0.84
+pydicom==2.4.4
+nibabel==5.2.1
+scikit-image==0.24.0
+
+# Data Processing
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.14.1
+
+# UI & Web
+gradio==4.44.1
+plotly==5.24.1
+matplotlib==3.9.2
+
+# Utilities
+pydantic==2.9.2
+pydantic-settings==2.5.2
+requests==2.32.3
+tqdm==4.66.5
+fastapi==0.115.2
+uvicorn==0.31.1
+
+# Testing
+pytest==8.3.3
+pytest-asyncio==0.24.0
+pytest-cov==5.0.0
+
+# Development
+black==24.10.0
+flake8==7.1.1
+mypy==1.11.2
