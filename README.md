@@ -37,53 +37,8 @@ A revolutionary AI-powered healthcare system combining **vector search**, **long
 
 **Two-Tier Modern Web Application**
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Next.js Frontend (Port 3000)                 │
-│  • TypeScript + Framer Motion                                    │
-│  • Glassmorphism UI with Tailwind CSS                            │
-│  • 5 Pages: Home, Diagnosis, Knowledge, Patients, Treatment      │
-│  • Beautiful animations and responsive design                    │
-└────────────────────────┬────────────────────────────────────────┘
-                         │ HTTP/REST API
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    FastAPI Backend (Port 8000)                   │
-│  • Python REST API exposing AI capabilities                      │
-│  • CORS enabled for frontend communication                       │
-│  • Endpoints: /diagnose, /search, /patients, /treatment          │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      MediVision AI Core                          │
-│                                                                   │
-│  ┌──────────────┐      ┌────────────────┐                       │
-│  │  RAG Engine  │─────▶│ Azure GPT-4o   │                       │
-│  │              │      │  (Reasoning)   │                       │
-│  └──────┬───────┘      └────────────────┘                       │
-│         │                                                         │
-│  ┌──────▼────────┐                                               │
-│  │  Qdrant Vector│                                               │
-│  │  Search Engine│                                               │
-│                       └────────┬───────┘                        │
-│                               │                                  │
-│      ┌────────────────────────┼────────────────────────┐       │
-│      │                        │                         │       │
-│  ┌───▼─────┐          ┌──────▼──────┐          ┌──────▼─────┐│
-│  │Medical  │          │   Patient   │          │  Medical   ││
-│  │ Texts   │          │   Memory    │          │  Images    ││
-│  │Collection│          │  Collection │          │ Collection ││
-│  └─────────┘          └─────────────┘          └────────────┘│
-│                                                                   │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │            Embedding Models                                │  │
-│  │  • BioBERT (Medical Text)                                 │  │
-│  │  • Sentence Transformers (General Text)                   │  │
-│  │  • ResNet-50 (Medical Images)                             │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-```
+![MediVision AI Architecture](docs/architecture.png)
+
 
 ---
 
